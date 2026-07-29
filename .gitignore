@@ -1,0 +1,30 @@
+# Devenv
+.devenv*
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Nix
+result
+
+# Data
+data/**
+!data/**/
+!data/**/*.yaml
+
+# Python
+__pycache__/
+.ruff_cache/
+*.pyc
+
+# Pipeline outputs (weights, exported models, FINN build artifacts)
+runs/
+finn_output/
+*.pt
+*.onnx
+*.scale.npy
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

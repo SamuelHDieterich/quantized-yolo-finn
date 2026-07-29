@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "quantized_yolo_finn",
+  "project_id": "47dfe817-45a8-4b80-bd8b-26481ea4a0eb"
+}
