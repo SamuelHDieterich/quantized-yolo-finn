@@ -12,7 +12,7 @@
   languages.python = {
     enable = true;
     package = pkgs.python313;
-    directory = "./src";
+    directory = ".";
     uv = {
       enable = true;
       sync.enable = true;

@@ -1,0 +1,5 @@
+[project]
+name = "quantized-yolo-finn"
+version = "0.1.0"
+description = "A repository for implementing a quantized YOLO object detection model using FINN on FPGAs."
+requires-python = ">=3.10,<3.14"
