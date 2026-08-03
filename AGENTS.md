@@ -1,16 +1,35 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
+This file provides instructions and context for AI coding agents working on this project.
+It is the single source of truth for project docs; `CLAUDE.md` is a symlink to it.
 
-## Quick Reference
+## Project
+
+A quantized YOLO object detection pipeline: full-precision training (Ultralytics) →
+Brevitas QAT → export to FINN-compatible QONNX → FINN dataflow compilation → FPGA
+bitstream synthesis and on-board inference.
+
+Five phases, tracked as bd epics (`bd list --tree` for the full breakdown):
+1. Full-precision YOLO training
+2. Quantization-aware training (Brevitas)
+3. Export to FINN-compatible ONNX
+4. FINN dataflow compilation
+5. Synthesis and on-board inference
+
+## Build & Test
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work atomically
-bd close <id>         # Complete work
-bd dolt push          # Push beads data to remote
+devenv shell    # enters the Nix dev shell (uv-managed Python venv, see .python-version)
 ```
+
+No test suite is wired up yet (tracked as `qyf-735.2.8`). Once it lands, this section
+should list the pytest invocation.
+
+## Conventions
+
+- Python only, managed with `uv` inside the devenv shell.
+- Pipeline config lives in `configs/*.yaml`; a pydantic model layer is planned (`qyf-735.2.4`).
+- Issue tracking is bd (beads), not markdown TODOs — see below.
 
 ## Non-Interactive Shell Commands
 
