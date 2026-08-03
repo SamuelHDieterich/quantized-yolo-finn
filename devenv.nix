@@ -62,6 +62,19 @@
           rmdir $temp_folder
         '';
       };
+
+    ###################
+    # Pipeline stages #
+    ###################
+
+    # Phase 1: Standard full-precision training via Ultralytics
+    train = {
+      description = ''
+        Train a YOLO model (full precision).
+        Pass --data <dataset.yaml> and optional overrides.
+      '';
+      exec = "uv run ${config.devenv.root}/src/train.py \"$@\"";
+    };
   };
 
   enterShell = ''

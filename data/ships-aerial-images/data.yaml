@@ -1,0 +1,7 @@
+# Relative paths to images
+train: train/images  # Training images
+val: valid/images    # Validation images (used for evaluation during training)
+test: test/images    # Test images (for final evaluation)
+
+nc: 1                # Number of classes in the dataset
+names: ['ship']      # Class names list (index order corresponds to class IDs)
