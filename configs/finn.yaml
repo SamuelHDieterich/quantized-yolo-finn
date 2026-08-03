@@ -1,0 +1,18 @@
+# FINN dataflow compilation configuration (Phase 4: finn_build.py).
+#
+# Keys mirror finn.builder.build_dataflow_config.DataflowBuildConfig so this
+# file can be loaded almost directly into that config object.
+
+# FINN board alias (e.g. "Pynq-Z1", "Pynq-Z2", "Zybo-Z7-20").
+# Pending confirmation of the exact Zynq part.
+board: null
+
+# ShellFlowType — "vivado_zynq" for boards with a native FINN shell.
+shell_flow_type: "vivado_zynq"
+
+# Build step to stop at, or empty to run the full dataflow build to bitstream.
+stop_step: ""
+
+# Path to a folding config JSON (PE/SIMD per layer), relative to this file's directory.
+# Left empty until automatic folding is checked against board resources.
+folding_config_file: null

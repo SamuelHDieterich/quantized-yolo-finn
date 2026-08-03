@@ -1,0 +1,13 @@
+# Full-precision training hyperparameters (Phase 1: train.py)
+epochs: 100
+batch_size: 16
+imgsz: 640
+
+# "0" for first GPU, "cpu" for CPU-only training
+device: "cpu"
+
+# Start from Ultralytics pretrained weights instead of random init
+pretrained: true
+
+# Output directory for Ultralytics training artifacts
+project: "runs/train"

@@ -1,0 +1,9 @@
+# Model and quantization configuration.
+# model_name can be any Ultralytics-supported YOLO variant
+# (e.g. yolov5n, yolov8n, yolov8s, yolov9n, yolov10n, etc.)
+#
+# NOTE: FINN synthesis only supports simple CNN architectures.
+# Avoid transformer-based variants (YOLOv8 attention, RTDETR).
+# yolov8n or yolov5n are recommended for FPGA targets.
+
+model_name: "yolov8n"
