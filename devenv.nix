@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -18,6 +19,19 @@
       sync.enable = true;
     };
   };
+
+  # opencv-python (pulled in by ultralytics) ships prebuilt binaries linked
+  # against shared libs that don't exist outside FHS distros.
+  env.LD_LIBRARY_PATH = lib.makeLibraryPath (
+    with pkgs;
+    [
+      zlib # libz.so.1
+      stdenv.cc.cc.lib # libstdc++.so.6
+      xorg.libxcb # libxcb.so.1
+      libGL # libGL.so.1
+      glib # libglib-2.0.so.0, libgthread-2.0.so.0
+    ]
+  );
 
   scripts = {
     ########
@@ -73,7 +87,7 @@
         Train a YOLO model (full precision).
         Pass --data <dataset.yaml> and optional overrides.
       '';
-      exec = "uv run ${config.devenv.root}/src/train.py \"$@\"";
+      exec = "uv run python -m qyf.stages.train \"$@\"";
     };
   };
 

@@ -17,19 +17,17 @@ import logging
 from pathlib import Path
 
 # External
-import yaml
 from ultralytics import YOLO
+
+# Internal
+from qyf.config import load_model_config, load_train_config
+from qyf.paths import repo_root, run_dir
 
 
 # ░█▀▀░█▀█░█▀█░█▀▀░▀█▀░█▀▀░█░█░█▀▄░█▀█░▀█▀░▀█▀░█▀█░█▀█
 # ░█░░░█░█░█░█░█▀▀░░█░░█░█░█░█░█▀▄░█▀█░░█░░░█░░█░█░█░█
 # ░▀▀▀░▀▀▀░▀░▀░▀░░░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀░▀░░▀░░▀▀▀░▀▀▀░▀░▀
 
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -53,50 +51,72 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+# ░█▄█░█▀▀░▀█▀░█░█░█▀█░█▀▄░█▀▀
+# ░█░█░█▀▀░░█░░█▀█░█░█░█░█░▀▀█
+# ░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀░░▀▀▀
+
+
+def train(data: Path, train_config_path: Path, model_config_path: Path) -> Path:
+    """
+    Run full-precision Ultralytics training.
+
+    Parameters
+    ----------
+    data : Path
+        Path to the YOLO-format dataset YAML.
+    train_config_path : Path
+        Path to train.yaml.
+    model_config_path : Path
+        Path to model.yaml.
+
+    Returns
+    -------
+    Path
+        Path to the best checkpoint produced by training.
+    """
+
+    train_cfg = load_train_config(train_config_path)
+    model_cfg = load_model_config(model_config_path)
+
+    weights = (
+        f"{model_cfg.model_name}.pt"
+        if train_cfg.pretrained
+        else f"{model_cfg.model_name}.yaml"
+    )
+    model = YOLO(weights)
+
+    logger.info("==> Training %s on %s", model_cfg.model_name, data)
+    logger.info("    Epochs: %s  |  Batch: %s", train_cfg.epochs, train_cfg.batch_size)
+
+    results = model.train(
+        data=str(Path(data).resolve()),
+        epochs=train_cfg.epochs,
+        batch=train_cfg.batch_size,
+        imgsz=train_cfg.imgsz,
+        device=train_cfg.device,
+        project=str(run_dir("train")),
+    )
+
+    best_weights = Path(results.save_dir) / "weights" / "best.pt"
+    logger.info("\n==> Training complete. Best checkpoint: %s", best_weights)
+    logger.info("    Next step: qat --weights %s --data %s", best_weights, data)
+
+    return best_weights
+
+
 # ░█▄█░█▀█░▀█▀░█▀█
 # ░█░█░█▀█░░█░░█░█
 # ░▀░▀░▀░▀░▀▀▀░▀░▀
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     args = parse_args()
-
-    # Step 1: load hyperparameters and model configuration from YAML.
-    with open(args.config) as f:
-        train_cfg: dict = yaml.safe_load(f)
-
-    with open(args.model_config) as f:
-        model_cfg: dict = yaml.safe_load(f)
-
-    model_name: str = model_cfg["model_name"]
-
-    # Step 2: build the model — pretrained checkpoint, or random init from the
-    # architecture YAML if the config asks for training from scratch.
-    weights = (
-        f"{model_name}.pt"
-        if train_cfg.get("pretrained", True)
-        else f"{model_name}.yaml"
+    train(
+        data=Path(args.data),
+        train_config_path=repo_root() / args.config,
+        model_config_path=repo_root() / args.model_config,
     )
-    model = YOLO(weights)
-
-    logger.info("==> Training %s on %s", model_name, args.data)
-    logger.info(
-        "    Epochs: %s  |  Batch: %s",
-        train_cfg.get("epochs", 100),
-        train_cfg.get("batch_size", 16),
-    )
-
-    # Step 3: run full-precision training via Ultralytics.
-    results = model.train(
-        data=str(Path(args.data).resolve()),
-        epochs=train_cfg.get("epochs", 100),
-        batch=train_cfg.get("batch_size", 16),
-        imgsz=train_cfg.get("imgsz", 640),
-        device=train_cfg.get("device", "cpu"),
-        project=train_cfg.get("project", "runs/train"),
-    )
-
-    # Step 4: report where the best checkpoint landed.
-    best_weights = Path(results.save_dir) / "weights" / "best.pt"
-    logger.info("\n==> Training complete. Best checkpoint: %s", best_weights)
-    logger.info("    Next step: qat --weights %s --data %s", best_weights, args.data)
