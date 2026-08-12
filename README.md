@@ -70,9 +70,7 @@ Edit the YAML files in `configs/` before running:
 train --data data/ships-in-aerial-images/data.yaml
 ```
 
-Trains the model configured in `configs/model.yaml` using Ultralytics.
-
-> **Known issue**: Ultralytics resolves a relative `project=` against its own default output directory, so checkpoints currently nest under `runs/detect/<project>/<name>/weights/` instead of `runs/train/<name>/weights/`. This is fixed by routing run directories through `qyf.paths` (tracked in `qyf-21p.1.1`); until that lands, check `runs/detect/runs/train/` for the actual latest run.
+Trains the model configured in `configs/model.yaml` using Ultralytics. The checkpoint lands at `runs/train/<name>/weights/best.pt`.
 
 ---
 
