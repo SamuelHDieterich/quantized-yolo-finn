@@ -13,10 +13,12 @@ without exercising a real Ultralytics training run.
 # Built-in
 from __future__ import annotations
 
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 # External
 import brevitas.nn as qnn
+import torch
 import torch.nn as nn
 
 # Internal
@@ -82,3 +84,79 @@ def test_get_model_uses_configured_bit_widths() -> None:
 
     assert model.conv.weight_quant.quant_injector.bit_width == 3
     assert model.act.act_quant.quant_injector.bit_width == 5
+
+
+def _patched_trainer_for_save(tmp_path) -> QATDetectionTrainer:
+    """A QATDetectionTrainer with just enough state for save_model()/final_eval(), no real Ultralytics init."""
+    trainer = QATDetectionTrainer.__new__(QATDetectionTrainer)
+    trainer.model_cfg = _model_cfg()
+    with patch("qyf.stages.qat.DetectionTrainer.get_model", return_value=_TinyModel()):
+        model = trainer.get_model()  # a real Brevitas-patched model, unpicklable whole
+
+    trainer.ema = SimpleNamespace(ema=model, updates=0)
+    trainer.model = model
+    trainer.optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    trainer.scaler = torch.amp.GradScaler(enabled=False)
+    trainer.args = SimpleNamespace(epochs=1, batch=2)
+    trainer.metrics = {}
+    trainer.fitness = 1.0
+    trainer.best_fitness = 1.0
+    trainer.epoch = 0
+    trainer.save_period = -1
+    trainer.wdir = tmp_path / "weights"
+    trainer.last = trainer.wdir / "last.pt"
+    trainer.best = trainer.wdir / "best.pt"
+    return trainer
+
+
+def test_save_model_writes_state_dict_not_whole_model(tmp_path) -> None:
+    trainer = _patched_trainer_for_save(tmp_path)
+
+    assert trainer.save_model() is True
+
+    for ckpt_path in (trainer.last, trainer.best):
+        ckpt = torch.load(ckpt_path, weights_only=False)
+        assert "model_state_dict" in ckpt
+        assert all(
+            isinstance(v, torch.Tensor) for v in ckpt["model_state_dict"].values()
+        )
+        assert "model" not in ckpt
+        assert "ema" not in ckpt
+
+
+def test_save_model_only_writes_best_when_fitness_is_best(tmp_path) -> None:
+    trainer = _patched_trainer_for_save(tmp_path)
+    trainer.fitness = 0.5
+    trainer.best_fitness = 1.0  # a prior epoch was better; this one isn't best
+
+    trainer.save_model()
+
+    assert trainer.last.exists()
+    assert not trainer.best.exists()
+
+
+def test_final_eval_validates_in_memory_when_best_exists(tmp_path) -> None:
+    trainer = QATDetectionTrainer.__new__(QATDetectionTrainer)
+    trainer.best = tmp_path / "best.pt"
+    trainer.best.write_bytes(b"stub state_dict checkpoint")
+    trainer.args = SimpleNamespace(plots=False)
+    trainer.epoch = 3
+    trainer.validator = MagicMock(return_value={"mAP50-95": 0.9, "fitness": 0.9})
+    trainer.run_callbacks = MagicMock()
+
+    trainer.final_eval()
+
+    trainer.validator.assert_called_once_with(trainer=trainer)
+    assert trainer.metrics == {"mAP50-95": 0.9}
+    assert trainer.epoch == 3
+    trainer.run_callbacks.assert_called_once_with("on_fit_epoch_end")
+
+
+def test_final_eval_skips_validation_without_a_checkpoint(tmp_path) -> None:
+    trainer = QATDetectionTrainer.__new__(QATDetectionTrainer)
+    trainer.best = tmp_path / "best.pt"  # never written
+    trainer.validator = MagicMock()
+
+    trainer.final_eval()
+
+    trainer.validator.assert_not_called()
