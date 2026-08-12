@@ -34,6 +34,9 @@ class ModelConfig(BaseModel):
     # Brevitas weight quantizer bit-width for QuantConv2d layers.
     # 2-8 is the FINN-compatible range.
     weight_bit_width: int = Field(default=4, ge=2, le=8)
+    # Brevitas activation quantizer bit-width for QuantHardTanh layers
+    # (the SiLU replacement). 2-8 is the FINN-compatible range.
+    act_bit_width: int = Field(default=4, ge=2, le=8)
 
 
 class TrainConfig(BaseModel):

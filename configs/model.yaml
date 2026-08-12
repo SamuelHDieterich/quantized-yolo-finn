@@ -10,3 +10,7 @@ model_name: "yolov8n"
 
 # Bit-width for Brevitas QuantConv2d weight quantizers (2-8, FINN-compatible range).
 weight_bit_width: 4
+
+# Bit-width for Brevitas QuantHardTanh activation quantizers, the SiLU
+# replacement (2-8, FINN-compatible range).
+act_bit_width: 4

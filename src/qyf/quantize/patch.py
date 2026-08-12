@@ -116,3 +116,48 @@ def patch_conv2d(model: nn.Module, model_cfg: ModelConfig) -> nn.Module:
     _walk(model)
 
     return model
+
+
+def patch_silu(model: nn.Module, model_cfg: ModelConfig) -> nn.Module:
+    """
+    Recursively replace nn.SiLU activations with Brevitas QuantHardTanh, in-place.
+
+    FINN has no native SiLU support, so the activation must be trained
+    against the op FINN can actually synthesize. QuantHardTanh's [-1, 1]
+    clamp matches nn.Hardtanh's default range, keeping this a like-for-like
+    activation swap rather than a different nonlinearity.
+
+    Parameters
+    ----------
+    model : nn.Module
+        Module tree to patch in-place.
+    model_cfg : ModelConfig
+        Model configuration; `act_bit_width` sets the quantizer's bit-width.
+
+    Returns
+    -------
+    nn.Module
+        The patched model. Operates in-place and also returns the model for convenience.
+    """
+
+    def _walk(module: nn.Module) -> None:
+        for name, child in list(module.named_children()):
+            if isinstance(child, nn.SiLU):
+                setattr(
+                    module,
+                    name,
+                    qnn.QuantHardTanh(
+                        bit_width=model_cfg.act_bit_width,
+                        min_val=-1.0,
+                        max_val=1.0,
+                    ),
+                )
+            else:
+                # Not a SiLU itself — recurse into its children
+                # (Sequential, C2f, etc.) to find the ones nested inside.
+                _walk(child)
+
+    # Kick off the recursion at the model's root.
+    _walk(model)
+
+    return model
