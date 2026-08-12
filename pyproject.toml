@@ -9,6 +9,7 @@ dependencies = [
     # Utilities
     "pyyaml>=6.0",
     "pydantic>=2.13.4",
+    "brevitas>=0.13.0",
 ]
 
 [project.scripts]
