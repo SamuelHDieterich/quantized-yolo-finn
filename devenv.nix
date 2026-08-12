@@ -89,6 +89,15 @@
       '';
       exec = "uv run python -m qyf.stages.train \"$@\"";
     };
+
+    # Phase 2: Quantization-aware fine-tuning via Brevitas
+    qat = {
+      description = ''
+        Fine-tune a trained YOLO model with Brevitas QAT.
+        Pass --weights <best.pt> --data <dataset.yaml> and optional overrides.
+      '';
+      exec = "uv run python -m qyf.stages.qat \"$@\"";
+    };
   };
 
   enterShell = ''

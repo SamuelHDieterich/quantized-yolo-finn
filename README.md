@@ -44,7 +44,7 @@ devenv shell
 
 For auto activation, enable the [shell integration](https://devenv.sh/auto-activation/) and then run `devenv allow` on this folder.
 
-This activates the Python 3.13 virtual environment (managed by `uv`) with the current dependencies (`ultralytics`, `pydantic`, `pyyaml`). Brevitas, ONNX, and the FINN toolchain are added as their respective phases land.
+This activates the Python 3.13 virtual environment (managed by `uv`) with the current dependencies (`ultralytics`, `pydantic`, `pyyaml`, `brevitas`). ONNX and the FINN toolchain are added as their respective phases land.
 
 ### 2. Get the example dataset
 
@@ -71,6 +71,14 @@ train --data data/ships-in-aerial-images/data.yaml
 ```
 
 Trains the model configured in `configs/model.yaml` using Ultralytics. The checkpoint lands at `runs/train/<name>/weights/best.pt`.
+
+### 5. Fine-tune with QAT
+
+```bash
+qat --weights runs/train/<name>/weights/best.pt --data data/ships-in-aerial-images/data.yaml
+```
+
+Continues training from the full-precision checkpoint with Brevitas quantization applied, so the network fine-tunes around the quantization error. The checkpoint lands at `runs/qat/<name>/weights/best.pt`.
 
 ---
 
