@@ -7,3 +7,6 @@
 # yolov8n or yolov5n are recommended for FPGA targets.
 
 model_name: "yolov8n"
+
+# Bit-width for Brevitas QuantConv2d weight quantizers (2-8, FINN-compatible range).
+weight_bit_width: 4

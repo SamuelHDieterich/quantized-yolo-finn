@@ -17,7 +17,7 @@ from pathlib import Path
 
 # External
 import yaml
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ░█▄█░█▀█░█▀▄░█▀▀░█░░░█▀▀
@@ -31,6 +31,9 @@ class ModelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     model_name: str
+    # Brevitas weight quantizer bit-width for QuantConv2d layers.
+    # 2-8 is the FINN-compatible range.
+    weight_bit_width: int = Field(default=4, ge=2, le=8)
 
 
 class TrainConfig(BaseModel):
